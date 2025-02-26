@@ -12,13 +12,13 @@ def create_floor_plan(save_path="coworking_space_floor_plan.png"):
     seat_spacing_y = 2  # Vertical spacing between chairs
 
     # Compute available area for seating
-    total_seat_width = width  # Allowing seats in path
+    total_seat_width = width - path_width  # Excluding path width
     total_seat_height = height  # Full height available
 
     x_offset = seat_size + seat_spacing_x
     y_offset = seat_size + seat_spacing_y
-    num_seats_x = total_seat_width // x_offset  # Number of seats per row with spacing
-    num_seats_y = total_seat_height // y_offset  # Number of seats per column with spacing
+    num_seats_x = (width - 2) // x_offset  # Number of seats per row with spacing
+    num_seats_y = (height - 2) // y_offset  # Number of seats per column with spacing
 
     # Calculate starting position to center the seats
     start_x = (width - (num_seats_x * x_offset - seat_spacing_x)) / 2
@@ -34,17 +34,19 @@ def create_floor_plan(save_path="coworking_space_floor_plan.png"):
     ax.add_patch(patches.Rectangle((door_position, height - 0.5), door_width, 0.5, fill=True, color='brown', label="Top Door (4 ft)"))
     ax.add_patch(patches.Rectangle((door_position, 0), door_width, 0.5, fill=True, color='brown', label="Bottom Door (4 ft)"))
     
-    # Draw path (Chairs can be placed on it)
+    # Draw path
     ax.add_patch(patches.Rectangle((door_position + door_width/2 - path_width/2, 0), path_width, height, fill=True, color='gray', alpha=0.3, label="Path (4 ft)"))
     
-    # Place seats in the best optimized and centered way, including in the path
+    # Place seats in the best optimized and centered way
     chair_count = 1
     for i in range(int(num_seats_x)):
         for j in range(int(num_seats_y)):
             seat_x, seat_y = start_x + i * x_offset, start_y + j * y_offset
-            ax.add_patch(patches.Rectangle((seat_x, seat_y), seat_size, seat_size, fill=True, color='blue', alpha=0.6, label="Chair" if chair_count == 1 else ""))
-            ax.text(seat_x + seat_size/2, seat_y + seat_size/2, str(chair_count), fontsize=8, ha='center', va='center', color='white')
-            chair_count += 1
+            # Ensure seats do not overlap with the path
+            if not (door_position <= seat_x <= door_position + path_width - seat_size):
+                ax.add_patch(patches.Rectangle((seat_x, seat_y), seat_size, seat_size, fill=True, color='blue', alpha=0.6, label="Chair" if chair_count == 1 else ""))
+                ax.text(seat_x + seat_size/2, seat_y + seat_size/2, str(chair_count), fontsize=8, ha='center', va='center', color='white')
+                chair_count += 1
     
     # Add dimensions
     ax.text(15, height + 1, "30 ft", fontsize=10, ha='center')
@@ -59,7 +61,7 @@ def create_floor_plan(save_path="coworking_space_floor_plan.png"):
     plt.xticks([])
     plt.yticks([])
     plt.gca().set_aspect('equal', adjustable='box')
-    plt.title("Co-Working Space Floor Plan with Optimized Seating (Including Path)")
+    plt.title("Co-Working Space Floor Plan with Optimized Seating")
     plt.legend()
     
     # Save the image
