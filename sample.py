@@ -12,17 +12,14 @@ def create_floor_plan(save_path="coworking_space_floor_plan.png"):
     seat_spacing_y = 2  # Vertical spacing between chairs
 
     # Compute available area for seating
-    total_seat_width = width - path_width  # Excluding path width
-    total_seat_height = height  # Full height available
-
     x_offset = seat_size + seat_spacing_x
     y_offset = seat_size + seat_spacing_y
-    num_seats_x = (width - 2) // x_offset  # Number of seats per row with spacing
-    num_seats_y = (height - 2) // y_offset  # Number of seats per column with spacing
+    num_seats_x = (width - path_width) // x_offset  # Ensuring path is excluded
+    num_seats_y = height // y_offset  # Number of seats per column with spacing
 
     # Calculate starting position to center the seats
-    start_x = (width - (num_seats_x * x_offset - seat_spacing_x)) / 2
-    start_y = (height - (num_seats_y * y_offset - seat_spacing_y)) / 2
+    start_x = (width - (num_seats_x * x_offset)) / 2
+    start_y = (height - (num_seats_y * y_offset)) / 2
 
     # Create figure and axis
     fig, ax = plt.subplots(figsize=(10, 10))
@@ -37,13 +34,13 @@ def create_floor_plan(save_path="coworking_space_floor_plan.png"):
     # Draw path
     ax.add_patch(patches.Rectangle((door_position + door_width/2 - path_width/2, 0), path_width, height, fill=True, color='gray', alpha=0.3, label="Path (4 ft)"))
     
-    # Place seats in the best optimized and centered way
+    # Place seats ensuring no overlap with the path
     chair_count = 1
-    for i in range(int(num_seats_x)):
-        for j in range(int(num_seats_y)):
+    for i in range(num_seats_x):
+        for j in range(num_seats_y):
             seat_x, seat_y = start_x + i * x_offset, start_y + j * y_offset
             # Ensure seats do not overlap with the path
-            if not (door_position <= seat_x <= door_position + path_width - seat_size):
+            if not (door_position - seat_size < seat_x < door_position + path_width):
                 ax.add_patch(patches.Rectangle((seat_x, seat_y), seat_size, seat_size, fill=True, color='blue', alpha=0.6, label="Chair" if chair_count == 1 else ""))
                 ax.text(seat_x + seat_size/2, seat_y + seat_size/2, str(chair_count), fontsize=8, ha='center', va='center', color='white')
                 chair_count += 1
